@@ -1,6 +1,6 @@
 package controllers
 
-import models.{Line, SearchResult, ServicePlan}
+import models.{Line, LineStatus, SearchResult, ServicePlan}
 import org.joda.time.DateTime
 
 import javax.inject._
@@ -56,6 +56,15 @@ class LineController @Inject()(
       .map(line => Ok(Json.toJson(line)))
   }
 
+  def downloadAllLinesThatAreActiveAndHaventSyncedWithNetsuiteInAYear() = Action {
+    val source = lineRepo.streamAll(Json.obj())
+      .filter( line => line.lineStatus.isDefined && line.lineStatus.get.equals(LineStatus.Active) )
+      .filter( line => line.lastSyncWithNetsuite.isDefined && line.lastSyncWithNetsuite.get.isAfter(DateTime.now().minusYears(1)))
+      .map( line => {
+        Json.toJson(line)
+      })
 
+    Ok.streamed(source, None)
+  }
 
 }

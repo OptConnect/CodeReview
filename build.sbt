@@ -11,6 +11,7 @@ libraryDependencies += guice
 libraryDependencies += "org.scalatestplus.play"           %% "scalatestplus-play"           % "5.1.0"           % Test
 libraryDependencies += "com.typesafe.play"                %% "play-json-joda"               % "2.9.2"
 libraryDependencies += "org.reactivemongo"                %% "play2-reactivemongo"          % "1.0.6-play28"
+libraryDependencies += "org.reactivemongo"                %% "reactivemongo-akkastream"     % "1.0.6"
 libraryDependencies += "org.typelevel"                    %% "squants"                      % "1.8.3"
 
 // Adds additional packages into Twirl
