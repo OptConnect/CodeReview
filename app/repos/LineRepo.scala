@@ -3,11 +3,12 @@ package repos
 import akka.actor.ActorSystem
 import models.Line
 import org.slf4j.LoggerFactory
+import play.api.libs.json.Json
 import play.api.libs.json.Json.obj
 import play.modules.reactivemongo.{NamedDatabase, ReactiveMongoApi}
 import reactivemongo.api.Cursor
 import reactivemongo.api.bson.{BSONDocumentReader, BSONDocumentWriter, BSONObjectID}
-import reactivemongo.play.json.compat.json2bson.toDocumentWriter
+import reactivemongo.play.json.compat.json2bson.{toDocumentReader, toDocumentWriter}
 import reactivemongo.api.bson.collection.BSONCollection
 import reactivemongo.play.json.compat._
 
@@ -29,5 +30,14 @@ class LineRepo @Inject()(implicit
     col.find(obj("netsuiteDetails.deviceId" -> deviceId))
       .cursor[Line]().collect[Seq](defaultMaxDocs, Cursor.FailOnError[Seq[Line]]())
   }
+
+  def findByActivationDate(startDate: Option[String]): Future[List[Line]] = collection() { col =>
+    col.find(
+      Json.obj(
+        "carrierDetails.lastActivated" -> Json.obj("$gt" -> startDate.get)
+      )
+    ).cursor[Line]().collect[List](defaultMaxDocs, Cursor.FailOnError[List[Line]]())
+  }
+
 
 }

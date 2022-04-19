@@ -1,6 +1,7 @@
 package controllers
 
 import models.{Line, SearchResult, ServicePlan}
+import org.joda.time.DateTime
 
 import javax.inject._
 import play.api._
@@ -40,5 +41,21 @@ class LineController @Inject()(
       }
       .map(line => Ok(Json.toJson(line)))
   }
+
+  def findLinesByActivationDate(startDate: Option[DateTime]) = Action.async {
+    lineRepo.findByActivationDate(startDate.map(date => date.toString()))
+      .flatMap { line =>
+        var out = List[Line]()
+        for (l <- line) {
+          if (l.carrierDetails.lastActivated.isDefined && l.carrierDetails.lastActivated.get.isAfter(startDate.get)) {
+            out = out ++ Seq(l)
+          }
+        }
+        Future.successful(out)
+      }
+      .map(line => Ok(Json.toJson(line)))
+  }
+
+
 
 }
