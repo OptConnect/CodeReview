@@ -1,6 +1,7 @@
 package controllers
 
-import models.{Line, SearchResult, ServicePlan}
+import models.{Line, LineStatus, SearchResult, ServicePlan}
+import org.joda.time.DateTime
 
 import javax.inject._
 import play.api._
@@ -39,6 +40,31 @@ class LineController @Inject()(
         case None => Future.successful(Seq.empty)
       }
       .map(line => Ok(Json.toJson(line)))
+  }
+
+  def findLinesByActivationDate(startDate: Option[DateTime]) = Action.async {
+    lineRepo.findByActivationDate(startDate.map(date => date.toString()))
+      .flatMap { line =>
+        var out = List[Line]()
+        for (l <- line) {
+          if (l.carrierDetails.lastActivated.isDefined && l.carrierDetails.lastActivated.get.isAfter(startDate.get)) {
+            out = out ++ Seq(l)
+          }
+        }
+        Future.successful(out)
+      }
+      .map(line => Ok(Json.toJson(line)))
+  }
+
+  def downloadAllLinesThatAreActiveAndHaventSyncedWithNetsuiteInAYear() = Action {
+    val source = lineRepo.streamAll(Json.obj())
+      .filter( line => line.lineStatus.isDefined && line.lineStatus.get.equals(LineStatus.Active) )
+      .filter( line => line.lastSyncWithNetsuite.isDefined && line.lastSyncWithNetsuite.get.isAfter(DateTime.now().minusYears(1)))
+      .map( line => {
+        Json.toJson(line)
+      })
+
+    Ok.streamed(source, None)
   }
 
 }
